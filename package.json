@@ -1,0 +1,23 @@
+{
+    "name": "tls-with-ml-kem",
+    "version": "1.0.0",
+    "type": "module",
+    "description": "ML-KEM-768 + AES-GCM-256 hybrid cryptography implementation",
+    "main": "mlkem_aes.ts",
+    "engines": {
+        "node": ">=24.7.0"
+    },
+    "scripts": {
+        "build": "tsc",
+        "example": "node --experimental-strip-types mlkem_aes.ts"
+    },
+    "keywords": [
+        "ML-KEM",
+        "AES-GCM",
+        "cryptography",
+        "post-quantum",
+        "WebCrypto"
+    ],
+    "author": "MarceloAssis123",
+    "license": "MIT"
+}
