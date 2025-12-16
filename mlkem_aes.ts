@@ -22,8 +22,6 @@
 
 import { webcrypto } from "node:crypto";
 
-const { subtle, getRandomValues } = webcrypto;
-
 // ============================================================================
 // HELPERS (internos)
 // ============================================================================
@@ -75,7 +73,7 @@ export type AesEncryptedText = {
  */
 export async function generateK(): Promise<CryptoKey> {
     try {
-        return await subtle.generateKey(
+        return await webcrypto.subtle.generateKey(
             {
                 name: "AES-GCM",
                 length: 256,
@@ -106,7 +104,7 @@ export async function encapsulateK(
 ): Promise<EncapsulatedK> {
     try {
         // Passo 1: Gerar wrappingKey usando ML-KEM-768
-        const encapResult = await subtle.encapsulateKey(
+        const encapResult = await webcrypto.subtle.encapsulateKey(
             "ML-KEM-768",
             recipientPublicKey,
             {
@@ -121,13 +119,13 @@ export async function encapsulateK(
         const wrappingKey = encapResult.sharedKey;
 
         // Passo 2: Exportar K como raw bytes
-        const kRaw = await subtle.exportKey("raw", K);
+        const kRaw = await webcrypto.subtle.exportKey("raw", K);
 
         // Passo 3: Gerar IV aleatório de 12 bytes para cifrar K
-        const wrapIv = getRandomValues(new Uint8Array(12));
+        const wrapIv = webcrypto.getRandomValues(new Uint8Array(12));
 
         // Passo 4: Cifrar kRaw com wrappingKey usando AES-GCM
-        const wrappedK = await subtle.encrypt(
+        const wrappedK = await webcrypto.subtle.encrypt(
             {
                 name: "AES-GCM",
                 iv: wrapIv,
@@ -169,7 +167,7 @@ export async function decapsulateK(
         const wrappedK = b64ToU8(data.wrappedKB64);
 
         // Passo 1: Derivar a mesma wrappingKey usando ML-KEM-768
-        const wrappingKey = await subtle.decapsulateKey(
+        const wrappingKey = await webcrypto.subtle.decapsulateKey(
             "ML-KEM-768",
             recipientPrivateKey,
             kemCiphertext,
@@ -182,7 +180,7 @@ export async function decapsulateK(
         );
 
         // Passo 2: Decifrar wrappedK usando wrappingKey
-        const kRawBytes = await subtle.decrypt(
+        const kRawBytes = await webcrypto.subtle.decrypt(
             {
                 name: "AES-GCM",
                 iv: wrapIv,
@@ -192,7 +190,7 @@ export async function decapsulateK(
         );
 
         // Passo 3: Importar os bytes recuperados como CryptoKey AES-GCM
-        const K = await subtle.importKey(
+        const K = await webcrypto.subtle.importKey(
             "raw",
             kRawBytes,
             {
@@ -231,10 +229,10 @@ export async function aesEncryptText(
 
         // Gerar IV aleatório de 12 bytes (96 bits) para AES-GCM
         // IMPORTANTE: Nunca reutilizar IV com a mesma chave!
-        const iv = getRandomValues(new Uint8Array(12));
+        const iv = webcrypto.getRandomValues(new Uint8Array(12));
 
         // Cifrar com AES-GCM
-        const ciphertext = await subtle.encrypt(
+        const ciphertext = await webcrypto.subtle.encrypt(
             {
                 name: "AES-GCM",
                 iv: iv,
@@ -272,7 +270,7 @@ export async function aesDecryptText(
         const ciphertext = b64ToU8(data.ciphertextB64);
 
         // Decifrar com AES-GCM
-        const plaintextBytes = await subtle.decrypt(
+        const plaintextBytes = await webcrypto.subtle.decrypt(
             {
                 name: "AES-GCM",
                 iv: iv,
@@ -298,7 +296,7 @@ export async function aesDecryptText(
 EXEMPLO DE FLUXO COMPLETO:
 
 // 1. Destinatário (Bob) gera par de chaves ML-KEM-768
-const bobKeyPair = await subtle.generateKey(
+const bobKeyPair = await webcrypto.subtle.generateKey(
   "ML-KEM-768",
   true,
   ["encapsulateKey", "decapsulateKey"]
